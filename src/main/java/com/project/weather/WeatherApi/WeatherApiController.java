@@ -41,7 +41,7 @@ public class WeatherApiController {
                 + "&dataType=JSON"            // JSON, XML
                 + "&numOfRows=10"             // 페이지 ROWS
                 + "&pageNo=1"                 // 페이지 번호
-                + "&base_date=20220312"       // 발표일자
+                + "&base_date=20220313"       // 발표일자
                 + "&base_time=0600"           // 발표시각
                 + "&nx=56"                    // 예보지점 X 좌표
                 + "&ny=125";                  // 예보지점 Y 좌표
