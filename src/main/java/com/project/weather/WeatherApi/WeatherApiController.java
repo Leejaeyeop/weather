@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.ZoneId;
 import java.util.HashMap;
 
 import org.json.JSONObject;
@@ -13,6 +14,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -28,25 +32,28 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class WeatherApiController {
     @GetMapping("/weather")
     public String restApiGetWeather() throws Exception {
+        LocalDate now = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String formatedNow = now.format(formatter);
         /*
             @ API LIST ~
-
             getUltraSrtNcst 초단기실황조회
             getUltraSrtFcst 초단기예보조회
             getVilageFcst 동네예보조회
             getFcstVersion 예보버전조회
         */
-        String url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst"
+        String url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst" //초단기 실황 조회
                 + "?serviceKey=GTWxvGjFFaMggZ6YGgtXbinNgewRheMqi9JVYQMUw26gJSpug6HjPTKyf0JzqJWkNXBT1%2Bn0dHmeS3rEDVum1A%3D%3D"
                 + "&dataType=JSON"            // JSON, XML
                 + "&numOfRows=10"             // 페이지 ROWS
                 + "&pageNo=1"                 // 페이지 번호
-                + "&base_date=20220313"       // 발표일자
+                + "&base_date=" + formatedNow       // 발표일자
                 + "&base_time=0600"           // 발표시각
                 + "&nx=56"                    // 예보지점 X 좌표
                 + "&ny=125";                  // 예보지점 Y 좌표
 
         HashMap<String, Object> resultMap = getDataFromJson(url, "UTF-8", "get", "");
+
 
         //System.out.println("# RESULT : " + resultMap);
 
@@ -107,7 +114,7 @@ public class WeatherApiController {
 
             StringBuffer result = new StringBuffer();
 
-            while ((line=br.readLine()) != null) result.append(line);
+            while ((line=br.readLine()) != null) {result.append(line);}
 
             ObjectMapper mapper = new ObjectMapper();
 
