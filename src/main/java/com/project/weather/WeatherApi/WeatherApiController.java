@@ -9,9 +9,11 @@ import java.net.URL;
 import java.time.ZoneId;
 import java.util.HashMap;
 
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,32 +32,39 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RestController
 @RequestMapping("/api")
 public class WeatherApiController {
-    @GetMapping("/weather")
-    public String restApiGetWeather() throws Exception {
+
+    private String ApiType;
+    private int pageRows,pageNo,date,time,nx,ny;
+    private String[] informations = new String[6];
+    private final String ServiceKey  = "?serviceKey=GTWxvGjFFaMggZ6YGgtXbinNgewRheMqi9JVYQMUw26gJSpug6HjPTKyf0JzqJWkNXBT1%2Bn0dHmeS3rEDVum1A%3D%3D";
+
+    @GetMapping("/weather/{apitype}/{info}")
+    public String restApiGetWeather(@PathVariable("apitype") String apitype,@PathVariable("info") String info) throws Exception {
         LocalDate now = LocalDate.now(ZoneId.of("Asia/Seoul"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         String formatedNow = now.format(formatter);
-        /*
-            @ API LIST ~
-            getUltraSrtNcst 초단기실황조회
-            getUltraSrtFcst 초단기예보조회
-            getVilageFcst 동네예보조회
-            getFcstVersion 예보버전조회
-        */
-        String url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst" //초단기 실황 조회
-                + "?serviceKey=GTWxvGjFFaMggZ6YGgtXbinNgewRheMqi9JVYQMUw26gJSpug6HjPTKyf0JzqJWkNXBT1%2Bn0dHmeS3rEDVum1A%3D%3D"
-                + "&dataType=JSON"            // JSON, XML
-                + "&numOfRows=10"             // 페이지 ROWS
-                + "&pageNo=1"                 // 페이지 번호
-                + "&base_date=" + formatedNow       // 발표일자
-                + "&base_time=0600"           // 발표시각
-                + "&nx=56"                    // 예보지점 X 좌표
-                + "&ny=125";                  // 예보지점 Y 좌표
 
-        HashMap<String, Object> resultMap = getDataFromJson(url, "UTF-8", "get", "");
+        //XSSFWorkbook workbook = new XSSFWorkbook()
 
+        this.ApiType = getApiType(apitype);
 
-        //System.out.println("# RESULT : " + resultMap);
+        informations = info.split("&");
+        for(int i=0; i< informations.length; i++)
+            informations[i] = informations[i].replaceAll("[^0-9]","");
+
+        StringBuffer url = new StringBuffer("http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/");
+        url.append(this.ApiType); //api type
+        url.append(ServiceKey); //인증키
+        url.append("&dataType=JSON"); // JSON, XML
+        url.append("&numOfRows="+informations[0]);             // 페이지 ROWS
+        url.append("&pageNo="+informations[1]);                 // 페이지 번호
+        url.append("&base_date=" + formatedNow); // 발표일자
+        url.append("&base_time="+informations[2]);           // 발표시각
+        url.append("&nx="+informations[3]);                    // 예보지점 X 좌표
+        url.append("&ny="+informations[4]);                  // 예보지점 Y 좌표
+
+        System.out.println(url.toString());
+        HashMap<String, Object> resultMap = getDataFromJson(url.toString(), "UTF-8", "get", "");
 
         JSONObject jsonObj = new JSONObject();
 
@@ -87,8 +96,8 @@ public class WeatherApiController {
 
         try {
             conn = (HttpURLConnection) apiURL.openConnection();
-            conn.setConnectTimeout(50000);
-            conn.setReadTimeout(50000);
+            conn.setConnectTimeout(100000);
+            conn.setReadTimeout(100000);
             conn.setDoOutput(true);
 
             if (isPost) {
@@ -118,7 +127,7 @@ public class WeatherApiController {
 
             ObjectMapper mapper = new ObjectMapper();
 
-            //System.out.println("json 출력" + result.toString());
+           // System.out.println("json 출력" + result.toString());
 
             resultMap = mapper.readValue(result.toString(), HashMap.class);
         } catch (Exception e) {
@@ -131,5 +140,29 @@ public class WeatherApiController {
         }
 
         return resultMap;
+    }
+
+    public String getApiType(String ApiType)
+    {
+        /*
+            @ API LIST ~
+            getUltraSrtNcst 초단기실황조회
+            getUltraSrtFcst 초단기예보조회
+            getVilageFcst 동네예보조회
+            getFcstVersion 예보버전조회
+        */
+        String str = "";
+        switch (ApiType)
+        {
+            case "ultra-srtncst": str = "getUltraSrtNcst";
+            break;
+            case "ultra-srtfcst": str = "getUltraSrtFcst";
+            break;
+            case "vilage-fcst": str = "getVilageFcst";
+            break;
+            case "fcst-version": str = "getFcstVersion";
+            break;
+        }
+        return str;
     }
 }
