@@ -87,8 +87,8 @@ public class WeatherApiController {
 
         try {
             conn = (HttpURLConnection) apiURL.openConnection();
-            conn.setConnectTimeout(5000);
-            conn.setReadTimeout(5000);
+            conn.setConnectTimeout(50000);
+            conn.setReadTimeout(50000);
             conn.setDoOutput(true);
 
             if (isPost) {
